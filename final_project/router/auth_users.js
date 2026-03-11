@@ -57,39 +57,39 @@ regd_users.post("/login", (req,res) => {
     }
     });
 
-// Add a book review
+// Add or modify a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-    const isbn = req.params.isbn;
-    let review = req.query.review; // Review is passed as a query string
-    let username = req.session.authorization.username; // Get username from session
-  
-    if (books[isbn]) {
-        let book = books[isbn];
-        // Add or update the review for this specific user
-        book.reviews[username] = review;
-        return res.status(200).send(`The review for the book with ISBN ${isbn} has been added/updated.`);
-    } else {
-        return res.status(404).json({message: "Book not found"});
-    }
-  });
+  const isbn = req.params.isbn;
+  let review = req.query.review;
+  let username = req.session.authorization.username;
 
-  // Delete a book review
-  regd_users.delete("/auth/review/:isbn", (req, res) => {
-    const isbn = req.params.isbn;
-    const username = req.session.authorization.username;
-  
-    if (books[isbn]) {
-        let book = books[isbn];
-        if (book.reviews[username]) {
-            delete book.reviews[username];
-            return res.status(200).send(`Reviews for the ISBN ${isbn} posted by the user ${username} deleted.`);
-        } else {
-            return res.status(404).json({message: "No review found for this user"});
-        }
-    } else {
-        return res.status(404).json({message: "Book not found"});
-    }
-  });
+  if (books[isbn]) {
+      let book = books[isbn];
+      book.reviews[username] = review;
+      // EXACT message requested by the feedback
+      return res.status(200).json({
+          message: `The review for the book with ISBN ${isbn} has been added/updated.`
+      });
+  }
+  return res.status(404).json({message: "Book not found"});
+});
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const isbn = req.params.isbn;
+  const username = req.session.authorization.username; // Ensure your login task sets this!
+
+  if (books[isbn]) {
+      let book = books[isbn];
+      if (book.reviews[username]) {
+          delete book.reviews[username];
+          // EXACT message requested by the feedback
+          return res.status(200).json({message: `Review for ISBN ${isbn} deleted`});
+      } else {
+          return res.status(404).json({message: "No review found for this user"});
+      }
+  }
+  return res.status(404).json({message: "Book not found"});
+});
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
